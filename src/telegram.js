@@ -125,9 +125,12 @@ async function submitPhonePassword(loginId, password) {
 function waitForReply(client, botEntity, timeoutMs, shouldStop) {
   return new Promise((resolve) => {
     let settled = false;
-    // incoming: true — важно! иначе событие сработает и на наше же
-    // отправленное сообщение (Telegram шлёт NewMessage-апдейт и на исходящие).
-    const eventBuilder = new NewMessage({ chats: [botEntity], incoming: true });
+    // ВАЖНО: в chats передаём именно botEntity.id (число/bigint), а не сам
+    // объект сущности — иначе gramjs пытается сериализовать объект в строку
+    // при резолве апдейта и падает с "Cannot find any entity corresponding
+    // to [object Object]", роняя весь процесс.
+    // incoming: true — чтобы не ловить наше же отправленное сообщение.
+    const eventBuilder = new NewMessage({ chats: [botEntity.id], incoming: true });
 
     const finish = (result) => {
       if (settled) return;

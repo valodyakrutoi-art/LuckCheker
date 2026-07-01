@@ -170,3 +170,13 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Сервер запущен на порту ${PORT}`);
 });
+
+// Страховка: если где-то вылетит необработанная ошибка (например, в недрах
+// gramjs при обработке апдейта), не роняем весь процесс и все активные
+// проверки, а просто логируем.
+process.on('uncaughtException', (err) => {
+  console.error('[uncaughtException]', err);
+});
+process.on('unhandledRejection', (err) => {
+  console.error('[unhandledRejection]', err);
+});
