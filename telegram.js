@@ -10,7 +10,7 @@ const BOT_USERNAME = process.env.TARGET_BOT_USERNAME || 'LuckChecker_robot';
 
 // Если в ответе LuckChecker_robot при совпадении встречается это слово —
 // пересылаем не в избранное, а в личку указанному юзернейму.
-const SPECIAL_KEYWORD = process.env.SPECIAL_KEYWORD || 'spookytime';
+const SPECIAL_KEYWORD = process.env.SPECIAL_KEYWORD || 'SpookyTime';
 const SPECIAL_FORWARD_USERNAME = process.env.SPECIAL_FORWARD_USERNAME || 'xikik0mori';
 
 if (!apiId || !apiHash) {
