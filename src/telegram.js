@@ -121,32 +121,47 @@ async function submitPhonePassword(loginId, password) {
   }
 }
 
-// ---------- Ожидание ответа бота ----------
-function waitForReply(client, botEntity, timeoutMs) {
+// ---------- Ожидание ответа бота (только входящие сообщения, прерываемое) ----------
+function waitForReply(client, botEntity, timeoutMs, shouldStop) {
   return new Promise((resolve) => {
     let settled = false;
-    const eventBuilder = new NewMessage({ chats: [botEntity] });
+    // incoming: true — важно! иначе событие сработает и на наше же
+    // отправленное сообщение (Telegram шлёт NewMessage-апдейт и на исходящие).
+    const eventBuilder = new NewMessage({ chats: [botEntity], incoming: true });
 
-    const handler = (event) => {
+    const finish = (result) => {
       if (settled) return;
       settled = true;
       client.removeEventHandler(handler, eventBuilder);
-      resolve(event.message);
+      clearTimeout(timeoutHandle);
+      clearInterval(stopInterval);
+      resolve(result);
     };
+
+    const handler = (event) => finish({ message: event.message });
 
     client.addEventHandler(handler, eventBuilder);
 
-    setTimeout(() => {
-      if (settled) return;
-      settled = true;
-      client.removeEventHandler(handler, eventBuilder);
-      resolve(null);
-    }, timeoutMs);
+    const timeoutHandle = setTimeout(() => finish(null), timeoutMs);
+
+    // каждые 300мс проверяем, не нажали ли "Остановить"
+    const stopInterval = setInterval(() => {
+      if (shouldStop()) finish('STOPPED');
+    }, 300);
   });
 }
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+// ---------- Пауза, которую можно прервать кнопкой "Остановить" ----------
+function interruptibleSleep(ms, shouldStop) {
+  return new Promise((resolve) => {
+    const start = Date.now();
+    const interval = setInterval(() => {
+      if (shouldStop() || Date.now() - start >= ms) {
+        clearInterval(interval);
+        resolve();
+      }
+    }, 200);
+  });
 }
 
 function randomDelay(minMs, maxMs) {
@@ -171,9 +186,15 @@ async function runCheckJob({ sessionString, messages, onEvent, shouldStop }) {
       await client.sendMessage(bot, { message: text });
       onEvent({ type: 'sent', index: i, total: messages.length, text });
 
-      const reply = await waitForReply(client, bot, 15000);
+      const result = await waitForReply(client, bot, 15000, shouldStop);
 
-      if (reply) {
+      if (result === 'STOPPED') {
+        onEvent({ type: 'stopped', index: i, total: messages.length });
+        break;
+      }
+
+      if (result) {
+        const reply = result.message;
         const replyText = reply.message || '';
         const isMatch = replyText.includes('Найдено совпадение');
         onEvent({ type: 'reply', index: i, total: messages.length, text: replyText, match: isMatch });
@@ -187,7 +208,11 @@ async function runCheckJob({ sessionString, messages, onEvent, shouldStop }) {
       }
 
       if (i < messages.length - 1) {
-        await sleep(randomDelay(3000, 5000));
+        await interruptibleSleep(randomDelay(3000, 5000), shouldStop);
+        if (shouldStop()) {
+          onEvent({ type: 'stopped', index: i, total: messages.length });
+          break;
+        }
       }
     }
 
