@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Promo Checker</title>
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="topbar">
+    <div class="logo">Promo<span>Checker</span></div>
+    <div class="topbar-account" id="topbarAccount" hidden>
+      <span id="topbarAccountLabel"></span>
+      <button class="link-btn" id="switchAccountBtn">сменить аккаунт</button>
+    </div>
+  </header>
+
+  <!-- ЭКРАН 1: ВХОД -->
+  <section id="screen-login" class="screen">
+    <div class="login-grid">
+
+      <div class="panel login-panel">
+        <h1>Вход в аккаунт</h1>
+        <p class="muted">Выбери способ входа в Telegram-аккаунт</p>
+
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="string">Стринг-сессия</button>
+          <button class="tab-btn" data-tab="phone">По номеру</button>
+        </div>
+
+        <!-- Вход по стринг сессии -->
+        <div class="tab-panel active" id="tab-string">
+          <label class="field-label">Строка сессии</label>
+          <textarea id="stringSessionInput" placeholder="1BVtsOK4A..." rows="3"></textarea>
+          <label class="field-label">Название (необязательно)</label>
+          <input type="text" id="stringLabelInput" placeholder="например: основной аккаунт" />
+          <button class="btn-primary" id="loginStringBtn">Войти</button>
+        </div>
+
+        <!-- Вход по номеру -->
+        <div class="tab-panel" id="tab-phone">
+          <div id="phoneStep1">
+            <label class="field-label">Номер телефона</label>
+            <input type="text" id="phoneInput" placeholder="+371XXXXXXXX" />
+            <button class="btn-primary" id="phoneSendCodeBtn">Отправить код</button>
+          </div>
+          <div id="phoneStep2" hidden>
+            <label class="field-label">Код из Telegram</label>
+            <input type="text" id="phoneCodeInput" placeholder="12345" />
+            <button class="btn-primary" id="phoneSubmitCodeBtn">Подтвердить код</button>
+          </div>
+          <div id="phoneStep3" hidden>
+            <label class="field-label">Пароль (двухфакторка)</label>
+            <input type="password" id="phonePasswordInput" placeholder="пароль облачной защиты" />
+            <button class="btn-primary" id="phoneSubmitPasswordBtn">Войти</button>
+          </div>
+        </div>
+
+        <p class="error-text" id="loginError"></p>
+      </div>
+
+      <div class="panel accounts-panel">
+        <h2>Сохранённые аккаунты</h2>
+        <p class="muted small">Нажми на аккаунт, чтобы продолжить без повторного входа</p>
+        <div id="accountsList" class="accounts-list"></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ЭКРАН 2: ДАШБОРД -->
+  <section id="screen-dashboard" class="screen" hidden>
+    <div class="dash-grid">
+
+      <div class="panel">
+        <h2>Промокоды</h2>
+        <p class="muted small">Впиши коды (каждый с новой строки) или загрузи .txt файл</p>
+        <textarea id="messagesInput" rows="10" placeholder="69x69&#10;SALE100&#10;PROMO2026"></textarea>
+        <input type="file" id="fileInput" accept=".txt" hidden />
+        <div class="row">
+          <button class="btn-secondary" id="uploadFileBtn">Загрузить .txt</button>
+          <span id="fileNameLabel" class="muted small"></span>
+        </div>
+        <div class="row" style="margin-top:16px;">
+          <button class="btn-primary" id="startJobBtn">Начать проверку</button>
+          <button class="btn-danger" id="stopJobBtn" hidden>Остановить</button>
+        </div>
+      </div>
+
+      <div class="panel log-panel">
+        <h2>Результаты</h2>
+        <div id="progressLine" class="muted small"></div>
+        <div id="logArea" class="log-area"></div>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>
