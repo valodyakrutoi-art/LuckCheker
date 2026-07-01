@@ -8,9 +8,9 @@ const apiId = parseInt(process.env.TELEGRAM_API_ID, 10);
 const apiHash = process.env.TELEGRAM_API_HASH;
 const BOT_USERNAME = process.env.TARGET_BOT_USERNAME || 'LuckChecker_robot';
 
-// Если в ответе LuckChecker_robot при совпадении встречается это слово —
+// Если в ответе LuckChecker_robot при совпадении встречается эта фраза —
 // пересылаем не в избранное, а в личку указанному юзернейму.
-const SPECIAL_KEYWORD = process.env.SPECIAL_KEYWORD || 'SpookyTime';
+const SPECIAL_KEYWORD = process.env.SPECIAL_KEYWORD || 'Источник: SpookyTime';
 const SPECIAL_FORWARD_USERNAME = process.env.SPECIAL_FORWARD_USERNAME || 'xikik0mori';
 
 if (!apiId || !apiHash) {
@@ -30,7 +30,10 @@ function makeLabel(me) {
 
 async function createClient(sessionString = '') {
   const client = new TelegramClient(new StringSession(sessionString), apiId, apiHash, {
-    connectionRetries: 5,
+    connectionRetries: 10,
+    retryDelay: 2000,
+    autoReconnect: true,
+    requestRetries: 5,
   });
   await client.connect();
   return client;
@@ -208,7 +211,7 @@ async function runCheckJob({ sessionString, messages, onEvent, shouldStop }) {
         onEvent({ type: 'reply', index: i, total: messages.length, text: replyText, match: isMatch });
 
         if (isMatch) {
-          const isSpecial = replyText.includes(SPECIAL_KEYWORD);
+          const isSpecial = replyText.toLowerCase().includes(SPECIAL_KEYWORD.toLowerCase());
           if (isSpecial) {
             const specialUser = await client.getEntity(SPECIAL_FORWARD_USERNAME);
             await client.forwardMessages(specialUser, { messages: [reply.id], fromPeer: bot });
